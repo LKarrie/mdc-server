@@ -1,0 +1,18 @@
+postgres:
+	docker run --name postgres12 -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d postgres:12-alpine
+
+createdb:
+	docker exec -it postgres12 createdb --username=root --owner=root mdc_server
+
+dropdb:
+	docker exec -it postgres12 dropdb mdc_server
+	
+test:
+	go test -v -cover ./...
+
+server:
+	go run main.go
+
+
+
+.PHONY: postgres createdb dropdb test server
