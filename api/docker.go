@@ -35,7 +35,7 @@ func (d *Docker) listImages(ctx *gin.Context) (images []types.ImageSummary, err 
 }
 
 func (d *Docker) pullImage(ctx *gin.Context, imageName string) (err error) {
-	out, err := d.cli.ImagePull(ctx, "alpine", types.ImagePullOptions{})
+	out, err := d.cli.ImagePull(ctx, imageName, types.ImagePullOptions{})
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func (d *Docker) saveImages(ctx *gin.Context, images []string) (err error) {
 		return err
 	}
 	ctx.Header("Content-Type", "application/octet-stream")
-	ctx.Header("Content-Disposition", "attachment; filename="+"t.tar")
+	ctx.Header("Content-Disposition", "attachment; filename="+"tmp.tar")
 	ctx.Header("Content-Transfer-Encoding", "binary")
 	ctx.Header("Accept-Length", fmt.Sprintf("%d", len(response)))
 	ctx.Writer.Write(response)

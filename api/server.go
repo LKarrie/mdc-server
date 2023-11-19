@@ -3,6 +3,7 @@ package api
 import (
 	db "github.com/LKarrie/mdc-server/db/sqlc"
 	"github.com/LKarrie/mdc-server/util"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -28,7 +29,18 @@ func NewServer(config util.Config, d *Docker, store db.Store) (*Server, error) {
 }
 
 func (server *Server) setupRouter() {
+	
 	router := gin.Default()
+	corsConfig := cors.DefaultConfig()
+
+	corsConfig.AllowOrigins = []string{"*"}
+	// To be able to send tokens to the server.
+	corsConfig.AllowCredentials = true
+	// OPTIONS method for ReactJS
+	corsConfig.AddAllowMethods("OPTIONS","GET","POST")
+	corsConfig.ExposeHeaders = []string{"Content-Disposition"}
+	// Register the middleware
+	router.Use(cors.New(corsConfig))
 
 	router.GET("/images/list", server.listImage)
 	router.POST("/images/pull", server.pullImage)
