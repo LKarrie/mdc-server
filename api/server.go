@@ -38,7 +38,7 @@ func (server *Server) setupRouter() {
 	corsConfig.AllowCredentials = true
 	// OPTIONS method for ReactJS
 	corsConfig.AddAllowMethods("OPTIONS","GET","POST")
-	corsConfig.ExposeHeaders = []string{"Content-Disposition"}
+	corsConfig.ExposeHeaders = []string{"Content-Disposition","Accept-Length"}
 	// Register the middleware
 	router.Use(cors.New(corsConfig))
 

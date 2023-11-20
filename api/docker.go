@@ -85,7 +85,7 @@ func (d *Docker) saveImages(ctx *gin.Context, images []string) (err error) {
 	ctx.Header("Content-Type", "application/octet-stream")
 	ctx.Header("Content-Disposition", "attachment; filename="+"tmp.tar")
 	ctx.Header("Content-Transfer-Encoding", "binary")
-	ctx.Header("Accept-Length", fmt.Sprintf("%d", len(response)))
+	ctx.Header("Content-Length", fmt.Sprintf("%d", len(response)))
 	ctx.Writer.Write(response)
 
 	return nil
