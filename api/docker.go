@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"regexp"
+	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/registry"
@@ -106,11 +108,36 @@ func (d *Docker) loadImages(ctx *gin.Context, file multipart.File) (err error) {
 	return nil
 }
 
+// not auth cant access resource
 func (d *Docker) pushImage(ctx *gin.Context, imageName string) (err error) {
-	resp, err := d.cli.ImagePush(ctx, imageName, types.ImagePushOptions{})
+
+	authConfig := registry.AuthConfig{
+		Username: "docker",
+		Password: "",
+	}
+	var encodedJSON []byte
+	encodedJSON, err = json.Marshal(authConfig)
 	if err != nil {
 		return err
 	}
+	authStr := base64.URLEncoding.EncodeToString(encodedJSON)
+	resp, err := d.cli.ImagePush(ctx, imageName, types.ImagePushOptions{RegistryAuth: authStr})
+	if err != nil {
+		return err
+	}
+
+	response, err := io.ReadAll(resp)
+	if err != nil {
+		return err
+	}
+	fmt.Println("---")
+	fmt.Println(string(response))
+	re, _ := regexp.Compile(`"123":(.*)}`)
+	result := re.FindAllString(string(response),-1)
+	if(len(result)>1){
+		fmt.Println(strings.TrimSuffix(result[0],"}"))
+	}
+	
 	defer resp.Close()
 	return nil
 }
