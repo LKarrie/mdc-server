@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -104,6 +105,15 @@ func (d *Docker) loadImages(ctx *gin.Context, file multipart.File) (err error) {
 	if err != nil {
 		return err
 	}
+	response, err := io.ReadAll(imageLoadResponse.Body)
+	if err != nil {
+		return err
+	}
+	err = dockerResponseCheck(ctx, response)
+	if err != nil {
+		return err
+	}
+
 	defer imageLoadResponse.Body.Close()
 	return nil
 }
@@ -130,14 +140,11 @@ func (d *Docker) pushImage(ctx *gin.Context, imageName string) (err error) {
 	if err != nil {
 		return err
 	}
-	fmt.Println("---")
-	fmt.Println(string(response))
-	re, _ := regexp.Compile(`"123":(.*)}`)
-	result := re.FindAllString(string(response),-1)
-	if(len(result)>1){
-		fmt.Println(strings.TrimSuffix(result[0],"}"))
+	err = dockerResponseCheck(ctx, response)
+	if err != nil {
+		return err
 	}
-	
+
 	defer resp.Close()
 	return nil
 }
@@ -160,4 +167,18 @@ func (d *Docker) pushImageWithAuth(ctx *gin.Context, imageName, username, passwo
 	}
 	defer resp.Close()
 	return nil
+}
+
+func dockerResponseCheck(ctx *gin.Context, response []byte) (err error) {
+	fmt.Println("---[docker log start]---")
+	fmt.Println(string(response))
+	fmt.Println("---[docker log end  ]---")
+	re, _ := regexp.Compile(`"error":(.*)}`)
+	result := re.FindAllString(string(response), -1)
+	fmt.Println(len(result))
+	if len(result) > 0 {
+		return errors.New(strings.TrimSuffix(result[0], "}"))
+	} else {
+		return nil
+	}
 }
