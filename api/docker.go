@@ -9,7 +9,9 @@ import (
 	"io"
 	"mime/multipart"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/registry"
@@ -85,8 +87,10 @@ func (d *Docker) saveImages(ctx *gin.Context, images []string) (err error) {
 	if err != nil {
 		return err
 	}
+
+	fileName := strconv.FormatInt(time.Now().Unix(), 10)+".tar"
 	ctx.Header("Content-Type", "application/octet-stream")
-	ctx.Header("Content-Disposition", "attachment; filename="+"tmp.tar")
+	ctx.Header("Content-Disposition", "attachment; filename="+fileName)
 	ctx.Header("Content-Transfer-Encoding", "binary")
 	ctx.Header("Content-Length", fmt.Sprintf("%d", len(response)))
 	ctx.Writer.Write(response)
@@ -162,9 +166,15 @@ func (d *Docker) pushImageWithAuth(ctx *gin.Context, imageName, username, passwo
 	authStr := base64.URLEncoding.EncodeToString(encodedJSON)
 	resp, err := d.cli.ImagePush(ctx, imageName, types.ImagePushOptions{RegistryAuth: authStr})
 
+	response, err := io.ReadAll(resp)
 	if err != nil {
 		return err
 	}
+	err = dockerResponseCheck(ctx, response)
+	if err != nil {
+		return err
+	}
+
 	defer resp.Close()
 	return nil
 }
@@ -181,4 +191,26 @@ func dockerResponseCheck(ctx *gin.Context, response []byte) (err error) {
 	} else {
 		return nil
 	}
+}
+
+func (d *Docker) removeImgae(ctx *gin.Context, imageId string) (imageDeletes []types.ImageDeleteResponseItem,err error) {
+	imageDeletes, err =  d.cli.ImageRemove(ctx, imageId, types.ImageRemoveOptions{
+		Force:         true,
+		PruneChildren: true,
+	})
+	return imageDeletes,err
+}
+
+func (d *Docker) removeImgaes(ctx *gin.Context, imageIds []string) (imageDeletes []types.ImageDeleteResponseItem,err error) {
+	for _, imageId := range imageIds {
+		res, err := d.cli.ImageRemove(ctx, imageId, types.ImageRemoveOptions{
+			Force:         true,
+			PruneChildren: true,
+		})
+		if err != nil {
+			return imageDeletes,err
+		}
+		imageDeletes = append(imageDeletes, res...)
+	}
+	return imageDeletes,err
 }

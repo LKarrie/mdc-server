@@ -29,7 +29,8 @@ func NewServer(config util.Config, d *Docker, store db.Store) (*Server, error) {
 }
 
 func (server *Server) setupRouter() {
-	
+	var apiPrefix = "/mdc/api";
+
 	router := gin.Default()
 	corsConfig := cors.DefaultConfig()
 
@@ -43,14 +44,16 @@ func (server *Server) setupRouter() {
 	// Register the middleware
 	router.Use(cors.New(corsConfig))
 
-	router.GET("/images/list", server.listImage)
-	router.POST("/images/pull", server.pullImage)
-	router.POST("/images/pull/auth", server.pullImageWithAuth)
-	router.POST("/images/create/tag", server.tagImage)
-	router.POST("/images/save", server.saveImage)
-	router.POST("/images/load", server.loadImage)
-	router.POST("/images/push", server.pushImage)
-	router.POST("/images/push/auth", server.pushImageWithAuth)
+	router.GET(apiPrefix+"/images/list", server.listImage)
+	router.POST(apiPrefix+"/images/pull", server.pullImage)
+	router.POST(apiPrefix+"/images/pull/auth", server.pullImageWithAuth)
+	router.POST(apiPrefix+"/images/create/tag", server.tagImage)
+	router.POST(apiPrefix+"/images/save", server.saveImage)
+	router.POST(apiPrefix+"/images/load", server.loadImage)
+	router.POST(apiPrefix+"/images/push", server.pushImage)
+	router.POST(apiPrefix+"/images/push/auth", server.pushImageWithAuth)
+	router.POST(apiPrefix+"/images/remove", server.removeImage)
+	router.POST(apiPrefix+"/images/remove/batch", server.removeImages)
 	// add routers to router
 	server.router = router
 }

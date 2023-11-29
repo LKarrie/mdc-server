@@ -177,3 +177,41 @@ func (server *Server) pushImageWithAuth(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, true)
 }
+
+type removeImageRequest struct {
+	ImageId string `json:"image_id" binding:"required"`
+}
+func (server *Server) removeImage(ctx *gin.Context) {
+	var req removeImageRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	imageDeletes,err := server.docker.removeImgae(ctx, req.ImageId)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, imageDeletes)
+}
+
+type removeImagesRequest struct {
+	ImageIds []string `json:"image_ids" binding:"required"`
+}
+func (server *Server) removeImages(ctx *gin.Context) {
+	var req removeImagesRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	imageDeletes,err := server.docker.removeImgaes(ctx, req.ImageIds)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, imageDeletes)
+}
