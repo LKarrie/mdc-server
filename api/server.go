@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Server servers HTTP requests for our banking service.
+// Server servers HTTP requests for our mdc api service.
 type Server struct {
 	config util.Config
 	docker *Docker

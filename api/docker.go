@@ -30,8 +30,6 @@ func NewDocker(c *client.Client) *Docker {
 }
 
 func (d *Docker) listImages(ctx *gin.Context) (images []types.ImageSummary, err error) {
-	// TODO: should i close ?
-	// defer cli.Close()
 	images, err = d.cli.ImageList(ctx, types.ImageListOptions{})
 	if err != nil {
 		return nil, err
@@ -41,6 +39,14 @@ func (d *Docker) listImages(ctx *gin.Context) (images []types.ImageSummary, err 
 
 func (d *Docker) pullImage(ctx *gin.Context, imageName string) (err error) {
 	out, err := d.cli.ImagePull(ctx, imageName, types.ImagePullOptions{})
+	if err != nil {
+		return err
+	}
+	response, err := io.ReadAll(out)
+	if err != nil {
+		return err
+	}
+	err = dockerResponseCheck(ctx, response)
 	if err != nil {
 		return err
 	}
@@ -60,6 +66,14 @@ func (d *Docker) pullImageWithAuth(ctx *gin.Context, imageName, username, passwo
 	}
 	authStr := base64.URLEncoding.EncodeToString(encodedJSON)
 	out, err := d.cli.ImagePull(ctx, imageName, types.ImagePullOptions{RegistryAuth: authStr})
+	if err != nil {
+		return err
+	}
+	response, err := io.ReadAll(out)
+	if err != nil {
+		return err
+	}
+	err = dockerResponseCheck(ctx, response)
 	if err != nil {
 		return err
 	}
@@ -182,10 +196,9 @@ func (d *Docker) pushImageWithAuth(ctx *gin.Context, imageName, username, passwo
 func dockerResponseCheck(ctx *gin.Context, response []byte) (err error) {
 	fmt.Println("---[docker log start]---")
 	fmt.Println(string(response))
-	fmt.Println("---[docker log end  ]---")
+	fmt.Println("---[docker log  end ]---")
 	re, _ := regexp.Compile(`"error":(.*)}`)
 	result := re.FindAllString(string(response), -1)
-	fmt.Println(len(result))
 	if len(result) > 0 {
 		return errors.New(strings.TrimSuffix(result[0], "}"))
 	} else {
